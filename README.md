@@ -1,3 +1,4 @@
+
 # 🏨 StayEase
 
 ### Your Journey to the Perfect Stay
@@ -222,3 +223,9 @@ SOFTWARE.
 ---
 
 **StayEase**: Discover your next destination. Enjoy the stay. 🏨
+<img width="1879" height="4467" alt="Screenshot 2026-10-20 at 17-41-58 front-end" src="https://github.com/user-attachments/assets/f82bbe67-bd9e-45ef-bd87-d8e6365a0aa7" />
+<img width="1857" height="1840" alt="Screenshot 2026-10-20 at 17-40-32 front-end" src="https://github.com/user-attachments/assets/5d02aa8b-65ce-4825-860b-0a06318bdedb" />
+<img width="1879" height="2620" alt="Screenshot 2026-10-20 at 17-40-07 front-end" src="https://github.com/user-attachments/assets/88f7f755-31b3-44b3-a8be-08074721d7b7" />
+<img width="1873" height="1627" alt="Screenshot 2026-10-20 at 17-39-20 front-end" src="https://github.com/user-attachments/assets/07539e97-f0f4-49d4-9d53-db19b1ec9949" />
+<img width="1867" height="2187" alt="Screenshot 2026-10-20 at 17-38-21 front-end" src="https://github.com/user-attachments/assets/e06e49f9-d414-49fc-9af0-dea44da7bd28" />
+<img width="1879" height="4544" alt="Screenshot 2026-10-20 at 18-05-56 front-end" src="https://github.com/user-attachments/assets/d1e79546-e242-4414-8965-e691a1a815f5" />
