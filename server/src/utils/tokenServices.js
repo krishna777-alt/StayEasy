@@ -2,10 +2,14 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
 //AccessToken
-export const generateAccessToken = function (userId) {
-  const accessToken = jwt.sign({ userId }, process.env.ACCESS_SECRET_KEY, {
-    expiresIn: process.env.ACCESS_TOKEN_EXPIRES,
-  });
+export const generateAccessToken = function (user) {
+  const accessToken = jwt.sign(
+    { userId: user._id, role: user.role },
+    process.env.ACCESS_SECRET_KEY,
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRES,
+    },
+  );
 
   return accessToken;
 };

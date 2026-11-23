@@ -1,48 +1,65 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { api } from "../../api/axios";
+import { logout } from "../../features/auth/authSlice";
 import {
   Building2,
   BedDouble,
   CalendarCheck,
   Settings,
   Users,
-  LogIn,
   LogOut,
   Bell,
-  Plus,
+  // Plus,
   TrendingUp,
   DollarSign,
   //   Search,
   ShieldCheck,
+  CreditCard,
   //   CheckCircle2,
   Wifi,
   Coffee,
   Tv,
   //   ChevronRight,
-  UserPlus,
+  // UserPlus,
 } from "lucide-react";
+import UserManagementTab from "./UserManagement";
+import OwnerManagementTab from "./HotelManagerMangement";
+import RoomManagementTab from "./RoomManagement";
+import HotelManagementTab from "./HotelManagement";
+import BookingManagementTab from "./BookingManagement";
+import PaymentManagementTab from "./PaymentManagementTab";
+import SupportManagementTab from "./SupportManagementTab";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("hotel");
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [logoutError, setLogoutError] = useState("");
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // Sidebar navigation options
   const navItems = [
     { id: "hotel", label: "View Hotel", icon: Building2 },
+    { id: "hotelManager", label: "View Owner", icon: Building2 },
     { id: "rooms", label: "Rooms", icon: BedDouble },
     { id: "bookings", label: "Bookings", icon: CalendarCheck },
     { id: "users", label: "Users", icon: Users },
+    { id: "payments", label: "Payments", icon: CreditCard },
+    { id: "support", label: "Support", icon: Bell },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setActiveTab("login");
-  };
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setIsLoggedIn(true);
-    setActiveTab("hotel");
+  const handleLogout = async () => {
+    setLogoutError("");
+    try {
+      await api.post("/logout");
+      dispatch(logout());
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Logout request failed:", error);
+      setLogoutError("Could not sign out. Please try again.");
+    }
   };
 
   return (
@@ -92,38 +109,32 @@ export default function AdminDashboard() {
 
         {/* Auth State & Manager Profile */}
         <div className="pt-6 border-t border-zinc-800/80 space-y-3">
-          {isLoggedIn ? (
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-zinc-800 border border-amber-400/40 flex items-center justify-center text-amber-400 font-bold text-sm">
-                  AD
-                </div>
-                <div>
-                  <h4 className="text-xs font-semibold text-zinc-200">
-                    System Admin
-                  </h4>
-                  <p className="text-[11px] text-zinc-500">
-                    admin@stayeasy.com
-                  </p>
-                </div>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-zinc-800 border border-amber-400/40 flex items-center justify-center text-amber-400 font-bold text-sm">
+                AD
               </div>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
+              <div>
+                <h4 className="text-xs font-semibold text-zinc-200">
+                  System Admin
+                </h4>
+                <p className="text-[11px] text-zinc-500">Administrator</p>
+              </div>
             </div>
-          ) : (
             <button
-              onClick={() => setActiveTab("login")}
-              className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-amber-400 bg-amber-400/10 border border-amber-400/20 hover:bg-amber-400/20 transition-all"
+              type="button"
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all"
             >
-              <LogIn className="w-4 h-4" />
-              <span>Login to Portal</span>
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
             </button>
-          )}
+            {logoutError && (
+              <p role="alert" className="text-xs text-red-300">
+                {logoutError}
+              </p>
+            )}
+          </div>
         </div>
       </aside>
 
@@ -136,18 +147,17 @@ export default function AdminDashboard() {
               {activeTab === "hotel" && "Hotel Overview"}
               {activeTab === "rooms" && "Rooms & Suites"}
               {activeTab === "bookings" && "Reservations Log"}
-              {activeTab === "users" && "User Management"}
+              {/* {activeTab === "users" && "User Management"} */}
               {activeTab === "settings" && "Global Settings"}
-              {activeTab === "login" && "Admin Authentication"}
             </h1>
-            <p className="text-xs text-zinc-400 mt-1">
+            {/* <p className="text-xs text-zinc-400 mt-1">
               Control suite inventory, monitor guest logs, and manage property
               configurations.
-            </p>
+            </p> */}
           </div>
 
           {/* Quick Actions */}
-          <div className="flex items-center space-x-3">
+          {/* <div className="flex items-center space-x-3">
             <button className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-amber-400 transition-colors relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-400" />
@@ -156,16 +166,18 @@ export default function AdminDashboard() {
               <Plus className="w-4 h-4" />
               <span>Add Property</span>
             </button>
-          </div>
+          </div> */}
         </header>
 
         {/* Dynamic Tab Views */}
-        {activeTab === "hotel" && <ViewHotelTab />}
-        {activeTab === "rooms" && <RoomsTab />}
-        {activeTab === "bookings" && <BookingsTab />}
-        {activeTab === "users" && <UsersTab />}
+        {activeTab === "hotel" && <HotelManagementTab />}
+        {activeTab === "hotelManager" && <OwnerManagementTab />}
+        {activeTab === "rooms" && <RoomManagementTab />}
+        {activeTab === "bookings" && <BookingManagementTab />}
+        {activeTab === "users" && <UserManagementTab />}
+        {activeTab === "payments" && <PaymentManagementTab />}
+        {activeTab === "support" && <SupportManagementTab />}
         {activeTab === "settings" && <SettingsTab />}
-        {activeTab === "login" && <LoginTab onLogin={handleLogin} />}
       </main>
     </div>
   );
@@ -416,84 +428,84 @@ function BookingsTab() {
 /* -------------------------------------------------------------------------- */
 /* 4. USERS TAB                                                               */
 /* -------------------------------------------------------------------------- */
-function UsersTab() {
-  const users = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john.doe@example.com",
-      role: "Registered Guest",
-      bookings: 4,
-      joined: "Jan 2026",
-    },
-    {
-      id: 2,
-      name: "Sophia Reynolds",
-      email: "sophia.r@example.com",
-      role: "VIP Member",
-      bookings: 12,
-      joined: "Mar 2025",
-    },
-    {
-      id: 3,
-      name: "Marcus Vance",
-      email: "marcus.v@example.com",
-      role: "Hotel Staff",
-      bookings: 0,
-      joined: "Aug 2026",
-    },
-  ];
+// function UsersTab() {
+//   const users = [
+//     {
+//       id: 1,
+//       name: "John Doe",
+//       email: "john.doe@example.com",
+//       role: "Registered Guest",
+//       bookings: 4,
+//       joined: "Jan 2026",
+//     },
+//     {
+//       id: 2,
+//       name: "Sophia Reynolds",
+//       email: "sophia.r@example.com",
+//       role: "VIP Member",
+//       bookings: 12,
+//       joined: "Mar 2025",
+//     },
+//     {
+//       id: 3,
+//       name: "Marcus Vance",
+//       email: "marcus.v@example.com",
+//       role: "Hotel Staff",
+//       bookings: 0,
+//       joined: "Aug 2026",
+//     },
+//   ];
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-serif font-bold text-zinc-100">
-          Registered Accounts
-        </h3>
-        <button className="flex items-center space-x-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-amber-400/40 px-3 py-2 text-xs text-amber-400 transition-colors">
-          <UserPlus className="w-4 h-4" />
-          <span>Add User</span>
-        </button>
-      </div>
+//   return (
+//     <div className="space-y-6">
+//       <div className="flex justify-between items-center">
+//         <h3 className="text-lg font-serif font-bold text-zinc-100">
+//           Registered Accounts
+//         </h3>
+//         <button className="flex items-center space-x-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-amber-400/40 px-3 py-2 text-xs text-amber-400 transition-colors">
+//           <UserPlus className="w-4 h-4" />
+//           <span>Add User</span>
+//         </button>
+//       </div>
 
-      <div className="rounded-2xl bg-zinc-900/80 border border-zinc-800 p-6 backdrop-blur-md shadow-xl overflow-x-auto">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="text-zinc-400 font-mono uppercase border-b border-zinc-800 pb-3">
-              <th className="pb-3">User Name</th>
-              <th className="pb-3">Email Address</th>
-              <th className="pb-3">Role</th>
-              <th className="pb-3">Total Bookings</th>
-              <th className="pb-3 text-right">Member Since</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-800/60 text-zinc-200">
-            {users.map((user) => (
-              <tr
-                key={user.id}
-                className="hover:bg-zinc-800/30 transition-colors"
-              >
-                <td className="py-4 font-semibold text-zinc-100">
-                  {user.name}
-                </td>
-                <td className="py-4 text-zinc-400">{user.email}</td>
-                <td className="py-4">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-zinc-950 text-amber-400 border border-amber-400/20 font-medium">
-                    {user.role}
-                  </span>
-                </td>
-                <td className="py-4 font-mono text-zinc-300">
-                  {user.bookings}
-                </td>
-                <td className="py-4 text-right text-zinc-500">{user.joined}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
+//       <div className="rounded-2xl bg-zinc-900/80 border border-zinc-800 p-6 backdrop-blur-md shadow-xl overflow-x-auto">
+//         <table className="w-full text-left text-xs">
+//           <thead>
+//             <tr className="text-zinc-400 font-mono uppercase border-b border-zinc-800 pb-3">
+//               <th className="pb-3">User Name</th>
+//               <th className="pb-3">Email Address</th>
+//               <th className="pb-3">Role</th>
+//               <th className="pb-3">Total Bookings</th>
+//               <th className="pb-3 text-right">Member Since</th>
+//             </tr>
+//           </thead>
+//           <tbody className="divide-y divide-zinc-800/60 text-zinc-200">
+//             {users.map((user) => (
+//               <tr
+//                 key={user.id}
+//                 className="hover:bg-zinc-800/30 transition-colors"
+//               >
+//                 <td className="py-4 font-semibold text-zinc-100">
+//                   {user.name}
+//                 </td>
+//                 <td className="py-4 text-zinc-400">{user.email}</td>
+//                 <td className="py-4">
+//                   <span className="px-2.5 py-0.5 rounded-full text-[10px] bg-zinc-950 text-amber-400 border border-amber-400/20 font-medium">
+//                     {user.role}
+//                   </span>
+//                 </td>
+//                 <td className="py-4 font-mono text-zinc-300">
+//                   {user.bookings}
+//                 </td>
+//                 <td className="py-4 text-right text-zinc-500">{user.joined}</td>
+//               </tr>
+//             ))}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   );
+// }
 
 /* -------------------------------------------------------------------------- */
 /* 5. SETTINGS TAB                                                            */
@@ -548,60 +560,6 @@ function SettingsTab() {
             Save System Settings
           </button>
         </div>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* 6. LOGIN TAB                                                               */
-/* -------------------------------------------------------------------------- */
-function LoginTab({ onLogin }) {
-  return (
-    <div className="max-w-md mx-auto py-12">
-      <div className="rounded-3xl bg-zinc-900/80 border border-zinc-800 p-8 backdrop-blur-md shadow-2xl space-y-6">
-        <div className="text-center space-y-2">
-          <span className="text-3xl font-serif font-bold text-amber-400">
-            StayEasy
-          </span>
-          <h2 className="text-xl font-bold text-zinc-100">Admin Sign In</h2>
-          <p className="text-xs text-zinc-400">
-            Enter administrator credentials to access the management portal.
-          </p>
-        </div>
-
-        <form onSubmit={onLogin} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-              Admin Email
-            </label>
-            <input
-              type="email"
-              defaultValue="admin@stayeasy.com"
-              required
-              className="w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-              Password
-            </label>
-            <input
-              type="password"
-              defaultValue="••••••••"
-              required
-              className="w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-100 focus:border-amber-400 focus:outline-none"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-amber-400 hover:bg-amber-300 py-3 text-sm font-semibold text-zinc-950 transition-colors shadow-lg shadow-amber-400/20 active:scale-95"
-          >
-            Authenticate Access
-          </button>
-        </form>
       </div>
     </div>
   );

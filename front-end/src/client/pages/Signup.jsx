@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api/axios";
 import { store } from "../../store/app";
 import { setCredentials } from "../../features/auth/authSlice";
+import { getRoleHomePath } from "../../utils/roleRoutes";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -43,7 +44,9 @@ export default function Signup() {
         }),
       );
 
-      navigate("/login");
+      navigate(getRoleHomePath(loginResponse.data.user?.role), {
+        replace: true,
+      });
     } catch (submitError) {
       console.error(submitError);
       setError(submitError.response?.data?.message || "Signup failed");

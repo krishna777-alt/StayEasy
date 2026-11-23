@@ -1,446 +1,638 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  CalendarDays,
+  // Check,
+  // ChevronDown,
+  // Filter,
+  MapPin,
+  Search,
+  SlidersHorizontal,
+  Star,
+  // Wifi,
+  // Wind,
+  // Waves,
+  // Coffee,
+} from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { api } from "../../api/axios";
+import RoomCards from "../componets/Room/RoomCards";
 
-// Mock Room Details Data
-const ROOM_DATA = {
-  id: "presidential-ocean-suite",
-  hotelName: "The Obsidian Sanctum",
-  hotelId: "obsidian-sanctum",
-  name: "Presidential Overwater Villa",
-  tagline:
-    "Unrivaled ocean panoramas with direct reef access and private glass-bottom observatory.",
-  pricePerNight: 1250,
-  sizeM2: 240,
-  sizeFt2: 2580,
-  maxGuests: "2 Adults, 1 Child",
-  bedType: "King Signature Cloud Bed",
-  view: "360° Indian Ocean Horizon",
-  gallery: [
-    "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=1200", // Master View
-    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=800",
-  ],
-  floorPlanUrl:
-    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1000",
-  amenityCategories: [
-    {
-      category: "Sanctuary & Comfort",
-      items: [
-        "Private Infinity Plunge Pool",
-        "Outdoor Rainfall Shower",
-        "Glass Floor Ocean Viewing Deck",
-        "Motorized Blackout Shades",
-      ],
-    },
-    {
-      category: "Bespoke Services",
-      items: [
-        "Dedicated 24/7 Island Butler",
-        "Unpacking & Packing Service",
-        "Daily Sunset Champagne & Canapés",
-        "In-Villa Spa Treatments",
-      ],
-    },
-    {
-      category: "Technology & Entertainment",
-      items: [
-        "Bang & Olufsen Surround Audio",
-        "High-Speed Starlink Wi-Fi",
-        "Automated Ambient Lighting Modes",
-        "Custom Wine Cellar Stocking",
-      ],
-    },
-  ],
-};
+const roomData = [
+  {
+    id: "1",
+    name: "Ocean View Luxury Suite",
+    type: "Suite",
+    description:
+      "Wake up to panoramic ocean views in this beautifully designed luxury suite.",
+    image:
+      "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1000",
+    price: 8500,
+    capacity: 3,
+    size: 65,
+    bed: "King Bed",
+    rating: 4.9,
+    reviews: 86,
+    available: 4,
+    amenities: ["Ocean View", "Private Balcony", "Free Wi-Fi"],
+    featured: true,
+  },
+  {
+    id: "2",
+    name: "Deluxe Double Room",
+    type: "Deluxe",
+    description:
+      "An elegant and peaceful room with modern interiors and garden views.",
+    image:
+      "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1000",
+    price: 6000,
+    capacity: 2,
+    size: 45,
+    bed: "Queen Bed",
+    rating: 4.8,
+    reviews: 54,
+    available: 8,
+    amenities: ["Garden View", "Breakfast", "Free Wi-Fi"],
+    featured: false,
+  },
+  {
+    id: "3",
+    name: "Presidential Villa",
+    type: "Villa",
+    description:
+      "Experience ultimate privacy with your own pool and spacious living area.",
+    image:
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1000",
+    price: 15000,
+    capacity: 4,
+    size: 110,
+    bed: "2 King Beds",
+    rating: 5.0,
+    reviews: 32,
+    available: 2,
+    amenities: ["Private Pool", "Ocean View", "Butler Service"],
+    featured: true,
+  },
+  {
+    id: "4",
+    name: "Garden View Standard Room",
+    type: "Standard",
+    description:
+      "A comfortable room surrounded by tropical greenery and natural beauty.",
+    image:
+      "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1000",
+    price: 4200,
+    capacity: 2,
+    size: 32,
+    bed: "Double Bed",
+    rating: 4.6,
+    reviews: 41,
+    available: 12,
+    amenities: ["Garden View", "Air Conditioning", "Free Wi-Fi"],
+    featured: false,
+  },
+  {
+    id: "5",
+    name: "Family Ocean Residence",
+    type: "Family",
+    description:
+      "A spacious residence designed for families who love comfort and ocean views.",
+    image:
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1000",
+    price: 11000,
+    capacity: 5,
+    size: 90,
+    bed: "2 Queen Beds",
+    rating: 4.9,
+    reviews: 63,
+    available: 3,
+    amenities: ["Ocean View", "Living Area", "Breakfast"],
+    featured: false,
+  },
+  {
+    id: "6",
+    name: "Honeymoon Ocean Villa",
+    type: "Villa",
+    description:
+      "A romantic private escape with beautiful ocean surroundings and premium comfort.",
+    image:
+      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1000",
+    price: 18000,
+    capacity: 2,
+    size: 100,
+    bed: "King Bed",
+    rating: 5.0,
+    reviews: 27,
+    available: 1,
+    amenities: ["Private Pool", "Ocean View", "Jacuzzi"],
+    featured: true,
+  },
+];
 
-export default function Rooms() {
-  const [activePhoto, setActivePhoto] = useState(0);
-  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "floorplan"
-  const [nights, setNights] = useState(3);
+function getDateInputValue(daysFromToday = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromToday);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
-  // Luxury Add-ons
-  const [addons, setAddons] = useState({
-    seaplane: true,
-    butler: false,
-    spaPackage: false,
-  });
+function addDaysToDate(value, days) {
+  const date = new Date(`${value}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
-  const seaplanePrice = 450;
-  const butlerPrice = 200 * nights;
-  const spaPrice = 350;
+function toRoomListItem(room, hotel) {
+  const bedCount = Number(room.beds) || 1;
+  const status = room.status || "available";
 
-  const roomSubtotal = ROOM_DATA.pricePerNight * nights;
-  const addOnTotal =
-    (addons.seaplane ? seaplanePrice : 0) +
-    (addons.butler ? butlerPrice : 0) +
-    (addons.spaPackage ? spaPrice : 0);
-  const totalAmount = roomSubtotal + addOnTotal;
+  return {
+    _id: String(room._id),
+    id: String(room._id),
+    name: room.name,
+    type: room.roomTypeCode || "Room",
+    description: room.description,
+    image: room.image || room.photos?.[0] || hotel?.images?.[0] || "",
+    price: Number(room.pricePerNight) || 0,
+    capacity: Number(room.maxOccupancy) || 1,
+    size: Number(room.size) || 0,
+    bed: `${bedCount} ${room.bedType || "Bed"}${bedCount > 1 ? "s" : ""}`,
+    rating: Number(room.rating) || 0,
+    reviews: Number(room.reviewsCount) || 0,
+    available:
+      status === "available"
+        ? Number(room.availableRooms ?? room.totalRooms) || 0
+        : 0,
+    amenities: [
+      room.hasAC ? "Air conditioning" : null,
+      room.hasBalcony ? "Balcony" : null,
+      room.smokingAllowed ? "Smoking allowed" : "Non-smoking",
+    ].filter(Boolean),
+    featured: false,
+    status,
+  };
+}
+
+function RoomsPage() {
+  const [searchParams] = useSearchParams();
+  const hotelId = searchParams.get("hotelId");
+  const [backendRooms, setBackendRooms] = useState([]);
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [isLoading, setIsLoading] = useState(Boolean(hotelId));
+  const [loadError, setLoadError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
+  const [search, setSearch] = useState("");
+  const [roomType, setRoomType] = useState("All Rooms");
+  const [sort, setSort] = useState("recommended");
+  const [maxPrice, setMaxPrice] = useState(20000);
+  const [minGuests, setMinGuests] = useState("Any");
+  const [likedRooms, setLikedRooms] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [checkInDate, setCheckInDate] = useState(() => getDateInputValue());
+  const [checkOutDate, setCheckOutDate] = useState(() =>
+    getDateInputValue(3),
+  );
+
+  useEffect(() => {
+    if (!hotelId) {
+      return undefined;
+    }
+
+    const controller = new AbortController();
+
+    async function loadHotelRooms() {
+      setIsLoading(true);
+      setLoadError("");
+      setBackendRooms([]);
+      setSelectedHotel(null);
+
+      try {
+        const [hotelResponse, roomsResponse] = await Promise.all([
+          api.get(`/hotels/hotel/${encodeURIComponent(hotelId)}`, {
+            signal: controller.signal,
+          }),
+          api.get("/hotels/display_rooms", {
+            params: { hotelId, checkInDate, checkOutDate },
+            signal: controller.signal,
+          }),
+        ]);
+
+        if (
+          !hotelResponse.data?.hotel ||
+          !Array.isArray(roomsResponse.data?.rooms)
+        ) {
+          throw new Error("The hotel rooms response was invalid.");
+        }
+
+        const hotel = hotelResponse.data.hotel;
+        setSelectedHotel(hotel);
+        setBackendRooms(
+          roomsResponse.data.rooms.map((room) => toRoomListItem(room, hotel)),
+        );
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setBackendRooms([]);
+          setSelectedHotel(null);
+          setLoadError(
+            error.response?.data?.message ||
+              error.message ||
+              "Unable to load this hotel's rooms.",
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadHotelRooms();
+
+    return () => controller.abort();
+  }, [hotelId, retryCount, checkInDate, checkOutDate]);
+
+  const formatPrice = (price) => `₹${price.toLocaleString("en-IN")}`;
+  const rooms = hotelId ? backendRooms : roomData;
+  const roomTypes = useMemo(
+    () => [
+      "All Rooms",
+      ...new Set(rooms.map((room) => room.type).filter(Boolean)),
+    ],
+    [rooms],
+  );
+  const activeRoomType = roomTypes.includes(roomType) ? roomType : "All Rooms";
+
+  const filteredRooms = useMemo(() => {
+    let result = [...rooms];
+
+    if (search.trim()) {
+      result = result.filter((room) =>
+        room.name.toLowerCase().includes(search.toLowerCase()),
+      );
+    }
+
+    if (activeRoomType !== "All Rooms") {
+      result = result.filter((room) => room.type === activeRoomType);
+    }
+
+    result = result.filter((room) => room.price <= maxPrice);
+
+    if (minGuests !== "Any") {
+      result = result.filter((room) => room.capacity >= Number(minGuests));
+    }
+
+    if (sort === "price-low") {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sort === "price-high") {
+      result.sort((a, b) => b.price - a.price);
+    } else if (sort === "rating") {
+      result.sort((a, b) => b.rating - a.rating);
+    }
+
+    return result;
+  }, [rooms, search, activeRoomType, maxPrice, minGuests, sort]);
+
+  const toggleLike = (id) => {
+    setLikedRooms((prev) =>
+      prev.includes(id)
+        ? prev.filter((roomId) => roomId !== id)
+        : [...prev, id],
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans pb-24">
-      {/* 1. BREADCRUMB & TITLE HEADER */}
-      <header className="max-w-7xl mx-auto px-4 sm:px-8 pt-6 pb-4">
-        <div className="flex items-center gap-2 text-xs text-zinc-400 mb-2">
-          <a href="/search" className="hover:text-amber-400 transition-colors">
-            Stays
+    <div className="min-h-screen bg-[#09090B] text-white">
+      {/* ========================== Navbar ========================== */}
+      {/* <nav className="sticky top-0 z-40 border-b border-white/10 bg-[#09090B]/90 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
+          <a href="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400 text-black">
+              <Sparkles size={19} />
+            </div>
+            <span className="font-serif text-2xl">
+              Stay<span className="text-amber-400">Ease.</span>
+            </span>
           </a>
-          <span>/</span>
-          <a
-            href={`/hotel/${ROOM_DATA.hotelId}`}
-            className="hover:text-amber-400 transition-colors"
-          >
-            {ROOM_DATA.hotelName}
-          </a>
-          <span>/</span>
-          <span className="text-zinc-100 font-medium">{ROOM_DATA.name}</span>
-        </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-extrabold text-zinc-100">
-              {ROOM_DATA.name}
-            </h1>
-            <p className="text-xs text-zinc-400 mt-1">{ROOM_DATA.tagline}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 px-3 py-1.5 rounded-full font-semibold">
-              ★ Signature Suite
-            </span>
-          </div>
-        </div>
-      </header>
 
-      {/* 2. GALLERY HERO & THUMBNAILS */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-8">
-        <div className="space-y-3">
-          {/* Active Featured Image */}
-          <div className="relative h-[420px] md:h-[520px] rounded-2xl overflow-hidden border border-zinc-800">
-            <img
-              src={ROOM_DATA.gallery[activePhoto]}
-              alt={ROOM_DATA.name}
-              className="w-full h-full object-cover transition-all duration-500"
-            />
-            <div className="absolute bottom-4 left-4 bg-zinc-950/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-zinc-800 text-xs text-zinc-300">
-              Photo {activePhoto + 1} of {ROOM_DATA.gallery.length}
-            </div>
-          </div>
-
-          {/* Thumbnail Selector Strip */}
-          <div className="grid grid-cols-4 gap-3">
-            {ROOM_DATA.gallery.map((imgUrl, idx) => (
-              <button
-                key={idx}
-                onClick={() => setActivePhoto(idx)}
-                className={`h-24 rounded-xl overflow-hidden border transition-all ${
-                  activePhoto === idx
-                    ? "border-amber-400 ring-2 ring-amber-400/20 scale-[0.99]"
-                    : "border-zinc-800 opacity-60 hover:opacity-100"
-                }`}
-              >
-                <img
-                  src={imgUrl}
-                  alt="Thumbnail"
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 3. QUICK SPECS RIBBON */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-8 mt-8">
-        <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-center backdrop-blur-md">
-          <div className="border-r border-zinc-800/80 last:border-none">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-widest block">
-              Villa Size
-            </span>
-            <span className="text-sm font-bold text-zinc-100">
-              {ROOM_DATA.sizeM2} m² / {ROOM_DATA.sizeFt2} ft²
-            </span>
-          </div>
-          <div className="border-r border-zinc-800/80 last:border-none">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-widest block">
-              Occupancy
-            </span>
-            <span className="text-sm font-bold text-zinc-100">
-              {ROOM_DATA.maxGuests}
-            </span>
-          </div>
-          <div className="border-r border-zinc-800/80 last:border-none">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-widest block">
-              Bed Arrangement
-            </span>
-            <span className="text-sm font-bold text-zinc-100">
-              {ROOM_DATA.bedType}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] text-zinc-500 uppercase tracking-widest block">
-              View
-            </span>
-            <span className="text-sm font-bold text-amber-400">
-              {ROOM_DATA.view}
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. MAIN CONTENT & SIDEBAR */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-8 mt-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* LEFT COLUMN: SPECS, FLOOR PLAN & AMENITIES (8 Cols) */}
-        <div className="lg:col-span-8 space-y-10">
-          {/* TAB SYSTEM: OVERVIEW VS FLOOR PLAN */}
-          <div className="space-y-6">
-            <div className="flex border-b border-zinc-800 gap-6">
-              <button
-                onClick={() => setActiveTab("overview")}
-                className={`pb-3 text-sm font-bold transition-colors relative ${
-                  activeTab === "overview"
-                    ? "text-amber-400"
-                    : "text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                Suite Highlights
-                {activeTab === "overview" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />
-                )}
-              </button>
-
-              <button
-                onClick={() => setActiveTab("floorplan")}
-                className={`pb-3 text-sm font-bold transition-colors relative ${
-                  activeTab === "floorplan"
-                    ? "text-amber-400"
-                    : "text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                Architectural Floor Plan
-                {activeTab === "floorplan" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400 rounded-full" />
-                )}
-              </button>
-            </div>
-
-            {/* TAB CONTENT: OVERVIEW */}
-            {activeTab === "overview" && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold text-zinc-100">
-                  The Overwater Experience
-                </h3>
-                <p className="text-sm text-zinc-400 leading-relaxed">
-                  Suspended directly over turquoise lagoon waters, this
-                  presidential villa features floor-to-ceiling retractable glass
-                  doors that open seamlessly onto a private teak sun deck with a
-                  infinity plunge pool, outdoor rain shower, and direct stair
-                  access to the live coral reef below.
-                </p>
-              </div>
-            )}
-
-            {/* TAB CONTENT: FLOOR PLAN */}
-            {activeTab === "floorplan" && (
-              <div className="space-y-4 bg-zinc-900/40 border border-zinc-800 p-4 rounded-2xl text-center">
-                <div className="relative h-80 rounded-xl overflow-hidden border border-zinc-800/80 bg-zinc-950 flex items-center justify-center">
-                  <img
-                    src={ROOM_DATA.floorPlanUrl}
-                    alt="Suite Architectural Floor Plan"
-                    className="w-full h-full object-cover opacity-85 hover:opacity-100 transition-opacity"
-                  />
-                  <div className="absolute top-3 left-3 bg-zinc-950/90 text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded border border-amber-400/30 uppercase">
-                    Architectural Layout • 240 m²
-                  </div>
-                </div>
-                <p className="text-xs text-zinc-500">
-                  Includes master suite, ensuite spa bathroom, private glass
-                  floor deck, and sunset dining gazebo.
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* AMENITIES CATEGORIES */}
-          <section className="space-y-6 border-t border-zinc-800/80 pt-8">
-            <h3 className="text-xl font-bold text-zinc-100">
-              In-Room Amenities & Privileges
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {ROOM_DATA.amenityCategories.map((cat, idx) => (
-                <div
-                  key={idx}
-                  className="bg-zinc-900/50 border border-zinc-800/80 p-5 rounded-2xl space-y-3"
-                >
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400/90">
-                    {cat.category}
-                  </h4>
-                  <ul className="space-y-2">
-                    {cat.items.map((item, i) => (
-                      <li
-                        key={i}
-                        className="text-xs text-zinc-300 flex items-center gap-2"
-                      >
-                        <span className="text-amber-400">✓</span> {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* LUXURY EXPERIENCES / ADD-ONS SELECTOR */}
-          <section className="space-y-4 border-t border-zinc-800/80 pt-8">
-            <h3 className="text-xl font-bold text-zinc-100">
-              Enhance Your Stay (Optional Add-ons)
-            </h3>
-            <div className="space-y-3">
-              <label className="flex items-center justify-between p-4 bg-zinc-900/60 border border-zinc-800 rounded-xl cursor-pointer hover:border-amber-400/40 transition-colors">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={addons.seaplane}
-                    onChange={(e) =>
-                      setAddons({ ...addons, seaplane: e.target.checked })
-                    }
-                    className="rounded border-zinc-700 bg-zinc-950 text-amber-400 focus:ring-amber-400"
-                  />
-                  <div>
-                    <span className="text-sm font-semibold text-zinc-100 block">
-                      Roundtrip Luxury Seaplane Transfer
-                    </span>
-                    <span className="text-xs text-zinc-400">
-                      VIP airport lounge access included
-                    </span>
-                  </div>
-                </div>
-                <span className="text-sm font-bold text-amber-400">
-                  +${seaplanePrice}
-                </span>
-              </label>
-
-              <label className="flex items-center justify-between p-4 bg-zinc-900/60 border border-zinc-800 rounded-xl cursor-pointer hover:border-amber-400/40 transition-colors">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={addons.butler}
-                    onChange={(e) =>
-                      setAddons({ ...addons, butler: e.target.checked })
-                    }
-                    className="rounded border-zinc-700 bg-zinc-950 text-amber-400 focus:ring-amber-400"
-                  />
-                  <div>
-                    <span className="text-sm font-semibold text-zinc-100 block">
-                      Personal 24/7 Butler Service
-                    </span>
-                    <span className="text-xs text-zinc-400">
-                      Dedicated staff for packing, dining & excursions
-                    </span>
-                  </div>
-                </div>
-                <span className="text-sm font-bold text-amber-400">
-                  +${butlerPrice} (${200}/night)
-                </span>
-              </label>
-            </div>
-          </section>
-        </div>
-
-        {/* RIGHT COLUMN: STICKY CHECKOUT SUMMARY CARD (4 Cols) */}
-        <aside className="lg:col-span-4">
-          <div className="sticky top-28 bg-zinc-900/90 border border-zinc-800 rounded-2xl p-6 backdrop-blur-md shadow-2xl space-y-6">
-            {/* Pricing Header */}
-            <div className="flex items-baseline justify-between pb-4 border-b border-zinc-800">
-              <div>
-                <span className="text-xs text-zinc-400 uppercase tracking-wider">
-                  Nightly Rate
-                </span>
-                <p className="text-3xl font-extrabold text-amber-400">
-                  ${ROOM_DATA.pricePerNight}
-                </p>
-              </div>
-              <span className="text-[11px] text-zinc-400">
-                Taxes & Fees calculated at checkout
-              </span>
-            </div>
-
-            {/* Stay Duration Selector */}
-            <div className="space-y-3">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-amber-400/90">
-                Duration of Stay
-              </label>
-              <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl p-3">
-                <span className="text-xs text-zinc-300 font-medium">
-                  Number of Nights
-                </span>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setNights(Math.max(1, nights - 1))}
-                    className="w-7 h-7 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-zinc-700 font-bold text-sm"
-                  >
-                    -
-                  </button>
-                  <span className="text-sm font-bold text-zinc-100">
-                    {nights}
-                  </span>
-                  <button
-                    onClick={() => setNights(nights + 1)}
-                    className="w-7 h-7 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-zinc-700 font-bold text-sm"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Price Breakdown */}
-            <div className="space-y-2 text-xs border-t border-zinc-800 pt-4">
-              <div className="flex justify-between text-zinc-400">
-                <span>
-                  ${ROOM_DATA.pricePerNight} x {nights} nights
-                </span>
-                <span className="text-zinc-200 font-medium">
-                  ${roomSubtotal}
-                </span>
-              </div>
-              {addOnTotal > 0 && (
-                <div className="flex justify-between text-zinc-400">
-                  <span>Selected Luxury Add-ons</span>
-                  <span className="text-amber-400 font-medium">
-                    +${addOnTotal}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between text-zinc-400">
-                <span>Estimated Resort Fee & Tax</span>
-                <span className="text-zinc-200 font-medium">
-                  ${Math.round(totalAmount * 0.12)}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm font-bold text-zinc-100 pt-3 border-t border-zinc-800">
-                <span>Total Due</span>
-                <span className="text-amber-400 text-lg">
-                  ${totalAmount + Math.round(totalAmount * 0.12)}
-                </span>
-              </div>
-            </div>
-
-            {/* Direct Checkout Trigger Button */}
-            <a
-              href={`/checkout?room=${ROOM_DATA.id}&nights=${nights}&addons=${Object.keys(
-                addons,
-              )
-                .filter((k) => addons[k])
-                .join(",")}`}
-              className="w-full block text-center py-4 px-6 rounded-xl text-xs font-bold bg-amber-400 text-zinc-950 hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/20 active:scale-[0.98]"
-            >
-              Proceed to Reserve Suite
+          <div className="hidden items-center gap-8 text-sm text-zinc-400 md:flex">
+            <a href="/" className="hover:text-amber-400">
+              Home
             </a>
+            <a href="/hotels" className="hover:text-amber-400">
+              Hotels
+            </a>
+            <a href="/bookings" className="hover:text-amber-400">
+              My Bookings
+            </a>
+            <a href="/about" className="hover:text-amber-400">
+              About
+            </a>
+          </div>
 
-            <p className="text-[11px] text-zinc-500 text-center">
-              🔒 Instant Confirmation • Instant VIP Booking
+          <button className="rounded-full bg-amber-400 px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-amber-300">
+            Sign In
+          </button>
+        </div>
+      </nav> */}
+
+      <main className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
+        {/* ========================== Breadcrumb ========================== */}
+        <div className="mb-8 flex items-center gap-2 text-xs text-zinc-500">
+          <a href="/">Home</a>
+          <span>/</span>
+          <a href="/hotels">Hotels</a>
+          <span>/</span>
+          <span className="text-amber-400">
+            {selectedHotel?.name || "Available Rooms"}
+          </span>
+        </div>
+
+        {/* ========================== Hotel Header ========================== */}
+        <section className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+          <div>
+            <span className="text-xs font-semibold tracking-[0.3em] text-amber-400">
+              {hotelId
+                ? selectedHotel?.name?.toUpperCase() || "HOTEL ROOMS"
+                : "THE OBSIDIAN SANCTUM"}
+            </span>
+
+            <h1 className="mt-3 font-serif text-4xl md:text-5xl">
+              {hotelId
+                ? `Rooms at ${selectedHotel?.name || "this hotel"}`
+                : "Find your perfect room."}
+            </h1>
+
+            <p className="mt-3 flex items-center gap-2 text-sm text-zinc-400">
+              <MapPin size={16} className="text-amber-400" />
+              {hotelId
+                ? selectedHotel?.location || "Loading hotel location..."
+                : "Baa Atoll, Maldives"}
             </p>
           </div>
-        </aside>
+
+          <div className="rounded-xl border border-white/10 bg-[#111113] px-5 py-3">
+            <p className="text-xs text-zinc-500">Property rating</p>
+            <p className="mt-1 flex items-center gap-2 text-sm">
+              <Star size={15} className="fill-amber-400 text-amber-400" />
+              <span className="font-semibold">
+                {hotelId
+                  ? selectedHotel?.rating
+                    ? `${selectedHotel.rating} / 5`
+                    : "Not rated"
+                  : "4.98 / 5"}
+              </span>
+              <span className="text-zinc-500">
+                ({hotelId ? selectedHotel?.reviewsCount || 0 : 142} reviews)
+              </span>
+            </p>
+          </div>
+        </section>
+
+        {/* ========================== Search Bar ========================== */}
+        <section className="mb-9 rounded-2xl border border-amber-400/20 bg-[#141311] p-4 md:p-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4 md:items-end">
+            <div>
+              <label className="mb-2 block text-xs text-zinc-400">
+                Search room
+              </label>
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+                <Search size={17} className="text-amber-400" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Room name..."
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-600"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-xs text-zinc-400">
+                Check-in
+              </label>
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+                <CalendarDays size={17} className="text-amber-400" />
+                <input
+                  type="date"
+                  min={getDateInputValue()}
+                  value={checkInDate}
+                  onChange={(event) => {
+                    const nextCheckIn = event.target.value;
+                    setCheckInDate(nextCheckIn);
+                    if (nextCheckIn >= checkOutDate) {
+                      setCheckOutDate(addDaysToDate(nextCheckIn, 1));
+                    }
+                  }}
+                  className="w-full bg-transparent text-sm text-white outline-none [color-scheme:dark]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-xs text-zinc-400">
+                Check-out
+              </label>
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3">
+                <CalendarDays size={17} className="text-amber-400" />
+                <input
+                  type="date"
+                  min={checkInDate}
+                  value={checkOutDate}
+                  onChange={(event) => setCheckOutDate(event.target.value)}
+                  className="w-full bg-transparent text-sm text-white outline-none [color-scheme:dark]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-xs text-zinc-400">Guests</label>
+              <select
+                value={minGuests}
+                onChange={(e) => setMinGuests(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-[#09090B] px-4 py-3 text-sm text-white outline-none"
+              >
+                <option value="Any">Any capacity</option>
+                <option value="1">1+ Guests</option>
+                <option value="2">2+ Guests</option>
+                <option value="3">3+ Guests</option>
+                <option value="4">4+ Guests</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        {/* ========================== Filters and Sorting ========================== */}
+        <section className="mb-7 flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
+          <div>
+            <p className="text-xs text-zinc-500">EXPLORE ACCOMMODATIONS</p>
+            <h2 className="mt-2 font-serif text-2xl">
+              Available room collections
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              Showing {filteredRooms.length} room types
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 rounded-full border border-white/10 px-4 py-2.5 text-xs hover:border-amber-400"
+            >
+              <SlidersHorizontal size={15} />
+              Filters
+            </button>
+
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="rounded-full border border-white/10 bg-[#111113] px-4 py-2.5 text-xs outline-none"
+            >
+              <option value="recommended">Recommended</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="rating">Highest Rated</option>
+            </select>
+          </div>
+        </section>
+
+        {/* ========================== Room Type Filters ========================== */}
+        <section className="mb-8 flex gap-2 overflow-x-auto pb-2">
+          {roomTypes.map((type) => (
+            <button
+              key={type}
+              onClick={() => setRoomType(type)}
+              className={`whitespace-nowrap rounded-full px-5 py-2.5 text-xs transition ${
+                activeRoomType === type
+                  ? "bg-amber-400 font-semibold text-black"
+                  : "border border-white/10 bg-[#111113] text-zinc-400 hover:border-amber-400/50 hover:text-white"
+              }`}
+            >
+              {type}
+            </button>
+          ))}
+        </section>
+
+        {/* ========================== Price Filter ========================== */}
+        {showFilters && (
+          <section className="mb-8 rounded-2xl border border-white/10 bg-[#111113] p-5">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-xl">Refine your search</h3>
+              <button
+                onClick={() => {
+                  setMaxPrice(20000);
+                  setMinGuests("Any");
+                  setRoomType("All Rooms");
+                }}
+                className="text-xs text-amber-400"
+              >
+                Reset filters
+              </button>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div>
+                <label className="text-xs text-zinc-400">
+                  Maximum price per night: {formatPrice(maxPrice)}
+                </label>
+                <input
+                  type="range"
+                  min="3000"
+                  max="20000"
+                  step="500"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="mt-4 w-full accent-amber-400"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-xs text-zinc-400">
+                  Minimum guest capacity
+                </label>
+                <select
+                  value={minGuests}
+                  onChange={(e) => setMinGuests(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm outline-none"
+                >
+                  <option value="Any">Any capacity</option>
+                  <option value="2">2+ guests</option>
+                  <option value="3">3+ guests</option>
+                  <option value="4">4+ guests</option>
+                </select>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ========================== Room Cards ========================== */}
+        <section>
+          {isLoading ? (
+            <p
+              className="rounded-2xl border border-white/10 bg-[#111113] px-5 py-20 text-center text-sm text-zinc-400"
+              role="status"
+            >
+              Loading rooms for this hotel...
+            </p>
+          ) : loadError ? (
+            <div
+              className="rounded-2xl border border-red-500/30 bg-[#111113] px-5 py-20 text-center"
+              role="alert"
+            >
+              <p className="text-sm text-red-300">{loadError}</p>
+              <button
+                type="button"
+                onClick={() => setRetryCount((count) => count + 1)}
+                className="mt-6 rounded-full bg-amber-400 px-6 py-3 text-xs font-bold text-black"
+              >
+                Try again
+              </button>
+            </div>
+          ) : filteredRooms.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-[#111113] px-5 py-20 text-center">
+              <Search size={35} className="mx-auto text-zinc-500" />
+              <h3 className="mt-5 font-serif text-2xl">
+                {hotelId ? "No rooms listed for this hotel" : "No rooms found"}
+              </h3>
+              <p className="mt-2 text-sm text-zinc-500">
+                {hotelId
+                  ? "Please check back later for available rooms."
+                  : "Try changing your filters or search terms."}
+              </p>
+              {!hotelId && (
+                <button
+                  onClick={() => {
+                    setSearch("");
+                    setRoomType("All Rooms");
+                    setMaxPrice(20000);
+                    setMinGuests("Any");
+                  }}
+                  className="mt-6 rounded-full bg-amber-400 px-6 py-3 text-xs font-bold text-black"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <RoomCards
+                rooms={filteredRooms}
+                toggleLike={toggleLike}
+                likedRooms={likedRooms}
+                formatPrice={formatPrice}
+              />
+            </>
+          )}
+        </section>
+
+        {/* ========================== Footer ========================== */}
       </main>
+
     </div>
   );
 }
+
+export default RoomsPage;
