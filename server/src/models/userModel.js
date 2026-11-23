@@ -17,7 +17,16 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      index: true,
+      match: [
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        "Please enter a valid email address",
+      ],
+    },
+
+    phone: {
+      type: String,
+      trim: true,
+      maxlength: 30,
     },
 
     password: {
@@ -26,7 +35,17 @@ const userSchema = new mongoose.Schema(
       minlength: 8,
       select: false,
     },
-    refreshTokens: [String],
+
+    role: {
+      type: String,
+      enum: ["admin", "user", "hotel"],
+      default: "user",
+    },
+
+    refreshTokens: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -34,16 +53,18 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre("save", async function (next) {
-  // Password hasn't changed
+userSchema.pre("save", async function () {
   if (!this.isModified("password")) {
-    return next;
+    return;
   }
 
   this.password = await bcrypt.hash(this.password, 12);
-
-  next;
 });
+
+// Compare entered password with hashed password
+userSchema.methods.comparePassword = async function (enteredPassword) {
+  return bcrypt.compare(enteredPassword, this.password);
+};
 
 const User = mongoose.model("User", userSchema);
 

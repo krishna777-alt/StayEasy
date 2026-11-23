@@ -1,21 +1,28 @@
 import { useState } from "react";
-import { NavLink, Link } from "react-router-dom";
-import AuthModal from "./AuthModel";
-import { useSelector } from "react-redux";
+import { NavLink, Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { api } from "../../api/axios";
+import { logout } from "../../features/auth/authSlice";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [authTab, setAuthTab] = useState("login");
-
+  const [logoutError, setLogoutError] = useState("");
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const isUserLogged = useSelector((state) => state.auth.isAuthenticated);
-  console.log(isUserLogged);
-
-  const openAuth = (tabName) => {
-    setAuthTab(tabName);
-    setIsAuthOpen(true);
+  const handleLogout = async () => {
+    setLogoutError("");
+    try {
+      await api.post("/logout");
+      dispatch(logout());
+      setIsMobileMenuOpen(false);
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Logout request failed:", error);
+      setLogoutError("Could not sign out. Please try again.");
+    }
   };
+
   // Helper function for NavLink class active states
   const navLinkStyles = ({ isActive }) =>
     `text-sm font-medium transition-colors duration-200 ${
@@ -76,12 +83,21 @@ const Navbar = () => {
                   </NavLink>
                 </>
               ) : (
-                <NavLink
-                  to="/account"
-                  className="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-white transition-colors"
-                >
-                  Account
-                </NavLink>
+                <>
+                  <NavLink
+                    to="/account"
+                    className="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-white transition-colors"
+                  >
+                    Account
+                  </NavLink>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-white transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
               )}
               <NavLink
                 to="/hotels"
@@ -157,6 +173,34 @@ const Navbar = () => {
               Explore Hotels
             </NavLink>
             <NavLink
+              to="/bookings"
+              className={({ isActive }) =>
+                `block py-2 text-base font-medium ${
+                  isActive
+                    ? "text-amber-400 font-semibold"
+                    : "text-zinc-300 hover:text-amber-400"
+                }`
+              }
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Bookings
+            </NavLink>
+            {isUserLogged && (
+              <NavLink
+                to="/account"
+                className={({ isActive }) =>
+                  `block py-2 text-base font-medium ${
+                    isActive
+                      ? "text-amber-400 font-semibold"
+                      : "text-zinc-300 hover:text-amber-400"
+                  }`
+                }
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Account
+              </NavLink>
+            )}
+            <NavLink
               to="/suites"
               className={({ isActive }) =>
                 `block py-2 text-base font-medium ${
@@ -197,13 +241,23 @@ const Navbar = () => {
             </NavLink>
 
             <div className="pt-4 border-t border-zinc-800 flex flex-col gap-2">
-              <NavLink
-                to="/login"
-                className="w-full text-center py-2.5 rounded-lg text-sm font-medium text-zinc-300 bg-zinc-800 hover:bg-zinc-700 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Sign In
-              </NavLink>
+              {isUserLogged ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full text-center py-2.5 rounded-lg text-sm font-medium text-zinc-300 bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                >
+                  Logout
+                </button>
+              ) : (
+                <NavLink
+                  to="/login"
+                  className="w-full text-center py-2.5 rounded-lg text-sm font-medium text-zinc-300 bg-zinc-800 hover:bg-zinc-700 transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Sign In
+                </NavLink>
+              )}
               <NavLink
                 to="/hotels"
                 className="w-full text-center py-2.5 rounded-lg text-sm font-semibold bg-amber-400 text-zinc-950 hover:bg-amber-300 transition-colors"
@@ -215,11 +269,14 @@ const Navbar = () => {
           </div>
         )}
       </nav>
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        initialTab={authTab}
-      />
+      {logoutError && (
+        <p
+          role="alert"
+          className="bg-red-950 px-4 py-2 text-center text-sm text-red-200"
+        >
+          {logoutError}
+        </p>
+      )}
     </>
   );
 };

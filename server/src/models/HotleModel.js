@@ -119,13 +119,13 @@ const hotelSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: false,
-      index: true,
+      // index: true,
     },
 
     isActive: {
       type: Boolean,
       default: true,
-      index: true,
+      // index: true,
     },
   },
 
@@ -136,19 +136,19 @@ const hotelSchema = new mongoose.Schema(
 );
 
 // Indexes
-hotelSchema.index({
-  name: "text",
-  location: "text",
-});
+// hotelSchema.index({
+//   name: "text",
+//   location: "text",
+// });
 
-hotelSchema.index({
-  slug: 1,
-});
+// hotelSchema.index({
+//   slug: 1,
+// });
 
-hotelSchema.index({
-  location: 1,
-  isActive: 1,
-});
+// hotelSchema.index({
+//   location: 1,
+//   isActive: 1,
+// });
 
 const Hotel = mongoose.model("Hotel", hotelSchema);
 

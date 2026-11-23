@@ -1,120 +1,96 @@
 import axios from "axios";
-// import { useSelector } from "react-redux";
 import { store } from "../store/app";
-import { logout, setAccessToken } from "../features/auth/authSlice";
+import { logout, setCredentials } from "../features/auth/authSlice";
+import { getUserFromAccessToken } from "../features/auth/accessToken";
+
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 export const api = axios.create({
-  baseURL: "http://localhost:3000/api",
-
+  baseURL: API_BASE_URL,
   withCredentials: true,
 });
 
 api.interceptors.request.use(
   (config) => {
-    // const accessToken = useSelector((state) => state.action.accessToken);
     const accessToken = store.getState().auth.accessToken;
 
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
-let isRefreshing = false;
 
-let refreshSubscribers = [];
-
-const subscribeTokenRefresh = (callback) => {
-  refreshSubscribers.push(callback);
-};
-
-const onRefreshed = (newAccessToken) => {
-  refreshSubscribers.forEach((callback) => callback(newAccessToken));
-
-  refreshSubscribers = [];
-};
-
-// ==========================================
-// Response interceptor
-// ==========================================
+let refreshPromise = null;
 
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Only handle 401
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    if (error.response?.status !== 401 || !originalRequest) {
       return Promise.reject(error);
     }
 
-    // Prevent retrying refresh request itself
-    if (originalRequest.url?.includes("/auth/refresh")) {
-      store.dispatch(logout());
+    const requestPath = originalRequest.url?.split("?")[0];
+    if (
+      ["/login", "/signup", "/refresh", "/logout"].includes(requestPath)
+    ) {
+      return Promise.reject(error);
+    }
 
+    if (originalRequest._retry) {
+      store.dispatch(logout());
       return Promise.reject(error);
     }
 
     originalRequest._retry = true;
 
-    // ======================================
-    // Refresh already happening
-    // ======================================
-
-    if (isRefreshing) {
-      return new Promise((resolve) => {
-        subscribeTokenRefresh((newAccessToken) => {
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-          resolve(api(originalRequest));
-        });
-      });
-    }
-
-    // ======================================
-    // Start refresh
-    // ======================================
-
-    isRefreshing = true;
-
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/refresh",
+      if (!refreshPromise) {
+        refreshPromise = axios
+          .post(`${API_BASE_URL}/refresh`, {}, { withCredentials: true })
+          .then((response) => {
+            const accessToken = response.data.accessToken;
+            const tokenUser = getUserFromAccessToken(accessToken);
 
-        {},
+            if (!tokenUser) {
+              throw new Error(
+                "Refresh response contains an invalid access token",
+              );
+            }
 
-        {
-          withCredentials: true,
-        },
-      );
+            const currentUser = store.getState().auth.user;
+            store.dispatch(
+              setCredentials({
+                accessToken,
+                user: currentUser
+                  ? { ...currentUser, ...tokenUser }
+                  : tokenUser,
+              }),
+            );
 
-      const newAccessToken = response.data.accessToken;
+            return accessToken;
+          })
+          .catch((refreshError) => {
+            store.dispatch(logout());
+            throw refreshError;
+          })
+          .finally(() => {
+            refreshPromise = null;
+          });
+      }
 
-      // Update Redux
-      store.dispatch(setAccessToken(newAccessToken));
-
-      // Release waiting requests
-      onRefreshed(newAccessToken);
-
-      // Retry original request
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      const accessToken = await refreshPromise;
+      originalRequest.headers = originalRequest.headers || {};
+      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
       return api(originalRequest);
     } catch (refreshError) {
-      // Refresh token invalid/expired
-      store.dispatch(logout());
-
-      refreshSubscribers = [];
-
       return Promise.reject(refreshError);
-    } finally {
-      isRefreshing = false;
     }
   },
 );
